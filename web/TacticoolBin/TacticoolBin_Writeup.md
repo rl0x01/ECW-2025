@@ -23,7 +23,7 @@ flag: ECW{L4Rry-1333333337-tulat.on}
 L'analyse du code source permet d'identifier plusieurs vulnérabilités :
 
 ### 1 - L'application est vulnérable à l'énumération d'utilisateurs
-![Pasted image 20251022222217.png](assets/Pasted image 20251022222217.png)
+![Pasted image 20251022222217.png](assets/Pasted_image_20251022222217.png)
 
 On peut voir sur la route `/dashboard/<username>` que la réponse varie selon que l'utilisateur existe ou non (status, contenu, longueur). Le code fait `User.query.filter_by(username=username).first()` et renvoie des templates/redirects différents. C'est exploitable pour confirmer l'existence d'un compte.
 
@@ -35,10 +35,10 @@ On peut voir sur la route `/dashboard/<username>` que la réponse varie selon qu
 - Différence de `StatusCode` ou `Content-Length` entre `GET /dashboard/larry` et `GET /dashboard/nonexistent`.
 
 http://challenges.challenge-ecw.eu:34915/dashboard/test1
-![Pasted image 20251022223952.png](assets/Pasted image 20251022223952.png)
+![Pasted image 20251022223952.png](assets/Pasted_image_20251022223952.png)
 
 http://challenges.challenge-ecw.eu:34915/dashboard/admin
-![Pasted image 20251022224008.png](assets/Pasted image 20251022224008.png)  
+![Pasted image 20251022224008.png](assets/Pasted_image_20251022224008.png)  
 *Ici on remarque également que l'utilisateur a été **alerté** ! *
 
 ---
@@ -52,7 +52,7 @@ En parcourant `app.py` et les templates on identifie ces points critiques :
 - Initialisation unique du cache : `cache = Cache(app)` : même instance pour messages et vues.
 - Dashboard avec `@cache.cached(timeout=0, unless=unauthorized)` → cache permanent si le propriétaire consulte son dashboard.
 - Création d'un message :
-![Pasted image 20251022224259.png](assets/Pasted image 20251022224259.png)
+![Pasted image 20251022224259.png](assets/Pasted_image_20251022224259.png)
 - Homepage : lit `cache.get(title)` et injecte le résultat dans `const messages = [...]` côté client.
 
 **Conclusion** : clé de cache prévisible (`view//dashboard/<username>`), cache partagé et `sleep(0.5)` créent une fenêtre de race exploitable pour lire le dashboard d'un autre utilisateur.
@@ -80,7 +80,7 @@ for u in cands:
 
 *Il se peut que la réponse ne soit pas correctement récupérer, au vu du peut de possibilité, nous pouvons essayer a la main.*
 
-![Pasted image 20251022224802.png](assets/Pasted image 20251022224802.png)
+![Pasted image 20251022224802.png](assets/Pasted_image_20251022224802.png)
 
 ---
 
@@ -261,12 +261,12 @@ if __name__ == "__main__":
         print("[-] Exploit did not find data. Try tuning --delay, increase --tries or run locally to test timing.")
 ```
 
-![Pasted image 20251022231927.png](assets/Pasted image 20251022231927.png)
+![Pasted image 20251022231927.png](assets/Pasted_image_20251022231927.png)
 ### 4.2 - PoC Burp Suite (manuel)
 - Intercepter requests `POST /` et la requête `GET /` .
 - Crée un groupe avec les deux requête
 - Envoyé en **parallel** (pour respecté le délai de du sleep(0.5) ) 
-![Pasted image 20251022232529.png](assets/Pasted image 20251022232529.png)
+![Pasted image 20251022232529.png](assets/Pasted_image_20251022232529.png)
 
 > Étant donné que nous avons identifié l’utilisateur **Larry** et que cela l’a alerté, son **dashboard** a été mis en cache lorsqu’il s’est connecté et a visité sa page.
 
